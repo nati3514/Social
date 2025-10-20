@@ -1,5 +1,11 @@
 # Social Media API
 
+[![Go Version](https://img.shields.io/badge/Go-1.21%2B-00ADD8?logo=go)](https://golang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/nati3514/Social?style=social)](https://github.com/nati3514/Social/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/nati3514/Social)](https://github.com/nati3514/Social/issues)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nati3514/Social)](https://goreportcard.com/report/github.com/nati3514/Social)
+
 A modern, high-performance social media API built with Go, featuring real-time capabilities and a RESTful architecture.
 
 ## 🚀 Features
