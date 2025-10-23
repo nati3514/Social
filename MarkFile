@@ -1,0 +1,15 @@
+include .envrc
+MIGRATIONS_PATH := cmd/migrate/migrations
+
+
+.PHONEY: migrate-create
+migrate:
+	@migrate create -ext sql -dir $(MIGRATIONS_PATH) $(filter-out $@, $(MAKECMDGOALS))
+
+.PHONEY: migrate-up
+migrate-up:
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_MIGRATE_URL) up
+
+.PHONEY: migrate-down
+migrate-down:
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_MIGRATOR_ADDR) down $(filter-out $@, $(MAKECMDGOALS))

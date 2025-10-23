@@ -10,7 +10,7 @@ A modern, high-performance social media API built with Go, featuring real-time c
 
 ## 🚀 Features
 
-### Current Features (v0.1.0)
+### Current Features (v0.2.0)
 - ✅ **Health Check Endpoint** - Monitor API status
 - ✅ **Chi Router** - Fast, lightweight HTTP router
 - ✅ **Middleware Stack**:
@@ -20,6 +20,9 @@ A modern, high-performance social media API built with Go, featuring real-time c
 - ✅ **Environment Configuration** - Flexible config via `.env` files
 - ✅ **Live Reload** - Development hot-reload with Air
 - ✅ **HTTP Timeouts** - Read/Write timeout protection
+- ✅ **Database Integration** - PostgreSQL with connection pooling
+- ✅ **SQL Migrations** - Cross-platform migration system (Windows/Linux)
+- ✅ **Repository Pattern** - Clean data access layer
 
 ### Planned Features
 - [ ] User authentication & authorization (JWT)
@@ -32,16 +35,18 @@ A modern, high-performance social media API built with Go, featuring real-time c
 - [ ] Feed generation
 - [ ] Search functionality
 - [ ] Rate limiting
-- [ ] PostgreSQL integration
 - [ ] Redis caching
 - [ ] File upload (images/videos)
 - [ ] Real-time notifications
+- [ ] Docker support
 
 ## 📋 Prerequisites
 
 - **Go** 1.21 or higher
 - **Git** for version control
+- **PostgreSQL** 13+
 - **Air** (optional, for live reload during development)
+- **Golang Migrate** (for database migrations)
 
 ## 🛠️ Installation
 
@@ -59,8 +64,21 @@ go mod download
 ### 3. Set up environment variables
 Create a `.env` file in the root directory:
 ```bash
+# Server
 ADDR=:4000
-```
+
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=social
+DB_SSLMODE=disable
+
+# Connection Pool
+DB_MAX_OPEN_CONNS=25
+DB_MAX_IDLE_CONNS=25
+DB_MAX_IDLE_TIME=15m
 
 ### 4. Run the application
 
@@ -85,19 +103,27 @@ The API will start on the port specified in your `.env` file (default: `:4000`).
 ```
 Social/
 ├── cmd/
-│   └── api/
-│       ├── main.go          # Application entry point
-│       ├── api.go           # Server setup and routing
-│       └── health.go        # Health check handler
+│   ├── api/                 # API server
+│   │   ├── main.go          # Application entry point
+│   │   ├── api.go           # Server setup and routing
+│   │   └── health.go        # Health check handler
+│   └── migrate/             # Database migrations
+│       └── migrations/      # Migration files
+│           ├── *.up.sql     # SQL for applying migrations
+│           └── *.down.sql   # SQL for rolling back migrations
 ├── internal/
-│   └── env/
-│       └── env.go           # Environment variable helpers
+│   ├── db/                  # Database connection and setup
+│   ├── env/                 # Environment variable helpers
+│   └── store/               # Repository pattern implementation
+│       ├── postgres/        # PostgreSQL implementations
+│       └── store.go         # Store interfaces
 ├── bin/                     # Compiled binaries (gitignored)
 ├── .env                     # Environment variables (gitignored)
-├── .air.toml               # Air configuration
-├── go.mod                  # Go module definition
-├── go.sum                  # Dependency checksums
-└── README.md               # This file
+├── .air.toml                # Air configuration
+├── migrate.ps1              # Windows migration helper
+├── go.mod                   # Go module definition
+├── go.sum                   # Dependency checksums
+└── README.md                # This file
 ```
 
 ## 🔌 API Endpoints
@@ -120,6 +146,38 @@ Response:
 ok
 ```
 
+## 🛠 Database Migrations
+
+### Windows
+```powershell
+# Create a new migration
+.\migrate.ps1 create migration_name
+
+# Apply all migrations
+.\migrate.ps1 up all
+
+# Rollback last migration
+.\migrate.ps1 down 1
+
+# Check migration status
+.\migrate.ps1 version
+```
+
+### Linux/macOS
+```bash
+# Install migrate
+brew install golang-migrate
+
+# Create a new migration
+migrate create -ext sql -dir cmd/migrate/migrations -seq migration_name
+
+# Apply all migrations
+migrate -path=cmd/migrate/migrations -database "postgres://user:password@localhost:5432/dbname?sslmode=disable" up
+
+# Rollback last migration
+migrate -path=cmd/migrate/migrations -database "postgres://user:password@localhost:5432/dbname?sslmode=disable" down 1
+```
+
 ## 🧪 Development
 
 ### Running with Air (Live Reload)
@@ -136,6 +194,15 @@ Configuration is in `.air.toml`.
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ADDR` | Server address and port | `:8080` |
+| `DB_HOST` | Database host | `localhost` |
+| `DB_PORT` | Database port | `5432` |
+| `DB_USER` | Database user | `postgres` |
+| `DB_PASSWORD` | Database password | - |
+| `DB_NAME` | Database name | `social` |
+| `DB_SSLMODE` | SSL mode for database | `disable` |
+| `DB_MAX_OPEN_CONNS` | Max open connections | `25` |
+| `DB_MAX_IDLE_CONNS` | Max idle connections | `25` |
+| `DB_MAX_IDLE_TIME` | Max connection idle time | `15m` |
 
 ### Code Style
 
