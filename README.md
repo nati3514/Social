@@ -10,18 +10,25 @@ A modern, high-performance social media API built with Go, featuring real-time c
 
 ## 🚀 Features
 
-### Current Features (v0.2.0)
-- ✅ **Health Check Endpoint** - Monitor API status
-- ✅ **Chi Router** - Fast, lightweight HTTP router
-- ✅ **Middleware Stack**:
-  - Request logging
-  - Panic recovery
-  - Real IP detection
-- ✅ **Environment Configuration** - Flexible config via `.env` files
-- ✅ **Live Reload** - Development hot-reload with Air
-- ✅ **HTTP Timeouts** - Read/Write timeout protection
-- ✅ **Database Integration** - PostgreSQL with connection pooling
-- ✅ **SQL Migrations** - Cross-platform migration system (Windows/Linux)
+### Current Features (v0.3.0)
+- ✅ **Core Infrastructure**
+  - Health Check Endpoint
+  - Chi Router with middleware stack
+  - Environment-based configuration
+  - Structured logging
+  - Database migrations
+
+- ✅ **API Features**
+  - **JSON Response Formatting** - Consistent API responses
+  - **User Feed** - View posts from followed users
+  - **Post Management** - Create and retrieve user posts
+  - **Error Handling** - Structured error responses
+  - **Request Validation** - Input validation middleware
+
+- 🚧 **In Progress**
+  - User authentication
+  - Comments system
+  - Real-time notifications
 - ✅ **Repository Pattern** - Clean data access layer
 
 ### Planned Features

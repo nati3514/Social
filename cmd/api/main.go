@@ -10,6 +10,8 @@ import (
 	"github.com/nati3514/Social/internal/store"
 )
 
+const version = "0.0.1"
+
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
@@ -25,6 +27,7 @@ func main() {
 			maxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 30),
 			maxIdleTime:  time.Duration(env.GetInt("DB_MAX_IDLE_MINUTES", 15)) * time.Minute,
 		},
+		env: env.GetString("ENV", "development"),
 	}
 
 	// Initialize database connection

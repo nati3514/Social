@@ -1,26 +1,29 @@
-package store 
+package store
 
 import (
-	"database/sql"
 	"context"
+	"database/sql"
+	"errors"
+)
+
+var (
+	ErrNotFound = errors.New("recored not found")
 )
 
 type Storage struct {
-	
 	Posts interface {
-	  Create(context.Context, *Post) error 
-     }
-	
+		GetByID(context.Context, int64) (*Post, error)
+		Create(context.Context, *Post) error
+	}
+
 	Users interface {
 		Create(context.Context, *User) error
 	}
 }
 
 func NewStorage(db *sql.DB) Storage {
-	return Storage {
+	return Storage{
 		Posts: &PostsStore{db},
 		Users: &UsersStore{db},
-		
 	}
 }
-
