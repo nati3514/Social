@@ -17,6 +17,7 @@ A modern, high-performance social media API built with Go, featuring real-time c
   - Environment-based configuration
   - Structured logging
   - Database migrations
+  - **Input Validation** with `go-playground/validator`
 
 - ✅ **API Features**
   - **JSON Response Formatting** - Consistent API responses
@@ -236,6 +237,7 @@ docs: update API endpoint documentation
 - **[Chi](https://github.com/go-chi/chi)** - HTTP router
 - **[godotenv](https://github.com/joho/godotenv)** - Environment variable management
 - **[Air](https://github.com/cosmtrek/air)** - Live reload for development
+- **[validator](https://github.com/go-playground/validator)** - Request payload validation
 
 ## 📝 License
 
