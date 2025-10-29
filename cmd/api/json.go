@@ -34,3 +34,24 @@ func writeJsonError(w http.ResponseWriter, status int, message string) error {
 	}
 	return writeJson(w, status, &envelope{Error: message})
 }
+
+// jsonResponse writes a JSON response with the given status code and data
+func jsonResponse(w http.ResponseWriter, status int, data any) error {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    
+    // Wrap the data in a "data" field
+    response := map[string]any{
+        "data": data,
+    }
+    
+    return json.NewEncoder(w).Encode(response)
+}
+
+// errorResponse writes a JSON error response
+func (app *application) errorResponse(w http.ResponseWriter, status int, message string) error {
+    type errorResponse struct {
+        Error string `json:"error"`
+    }
+    return jsonResponse(w, status, errorResponse{Error: message})
+}
