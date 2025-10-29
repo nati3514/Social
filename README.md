@@ -10,21 +10,23 @@ A modern, high-performance social media API built with Go, featuring real-time c
 
 ## 🚀 Features
 
-### Current Features (v0.3.0)
+### Current Features (v0.4.0)
 - ✅ **Core Infrastructure**
   - Health Check Endpoint
-  - Chi Router with middleware stack
+  - Chi Router with context middleware
   - Environment-based configuration
-  - Structured logging
-  - Database migrations
-  - **Input Validation** with `go-playground/validator`
+  - Structured logging with request IDs
+  - Database migrations with versioning
+  - **Multi-layer Validation** with `go-playground/validator`
 
 - ✅ **API Features**
-  - **JSON Response Formatting** - Consistent API responses
-  - **User Feed** - View posts from followed users
-  - **Post Management** - Create and retrieve user posts
-  - **Error Handling** - Structured error responses
-  - **Request Validation** - Input validation middleware
+  - **RESTful JSON API** with consistent response format
+  - **Post Management** - Full CRUD operations
+  - **Comment System** - Nested comments on posts
+  - **Context Middleware** - Efficient resource loading
+  - **Error Handling** - Structured error responses with proper HTTP status codes
+  - **Request Validation** - Input validation at multiple layers
+  - **Partial Updates** - PATCH support with proper null handling
 
 - 🚧 **In Progress**
   - User authentication
@@ -136,22 +138,51 @@ Social/
 
 ## 🔌 API Endpoints
 
-### Current Endpoints
+### API Endpoints
 
+#### Posts
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| `GET` | `/v1/posts` | List all posts | ✅ Implemented |
+| `POST` | `/v1/posts` | Create a new post | ✅ Implemented |
+| `GET` | `/v1/posts/{id}` | Get a specific post with comments | ✅ Implemented |
+| `PATCH` | `/v1/posts/{id}` | Partially update a post | ✅ Implemented |
+| `DELETE` | `/v1/posts/{id}` | Delete a post | ✅ Implemented |
+
+#### Comments
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| `GET` | `/v1/posts/{id}/comments` | Get comments for a post | ✅ Implemented |
+
+#### System
 | Method | Endpoint | Description | Status |
 |--------|----------|-------------|--------|
 | `GET` | `/v1/health` | Health check | ✅ Implemented |
 
 ### Example Usage
 
+**Create a Post:**
+```bash
+curl -X POST http://localhost:4000/v1/posts \
+  -H "Content-Type: application/json" \
+  -d '{"title":"First Post","content":"This is my first post","user_id":1}'
+```
+
+**Get a Post with Comments:**
+```bash
+curl http://localhost:4000/v1/posts/1
+```
+
+**Update a Post (Partial Update):**
+```bash
+curl -X PATCH http://localhost:4000/v1/posts/1 \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Updated Title"}'
+```
+
 **Health Check:**
 ```bash
 curl http://localhost:4000/v1/health
-```
-
-Response:
-```
-ok
 ```
 
 ## 🛠 Database Migrations
@@ -212,8 +243,9 @@ Configuration is in `.air.toml`.
 | `DB_MAX_IDLE_CONNS` | Max idle connections | `25` |
 | `DB_MAX_IDLE_TIME` | Max connection idle time | `15m` |
 
-### Code Style
+### Code Style & Best Practices
 
+#### Commit Messages
 This project follows [Conventional Commits](https://www.conventionalcommits.org/) for commit messages:
 
 - `feat:` - New features
@@ -223,6 +255,18 @@ This project follows [Conventional Commits](https://www.conventionalcommits.org/
 - `perf:` - Performance improvements
 - `test:` - Test additions/changes
 - `chore:` - Maintenance tasks
+
+#### Code Organization
+- **Handler Layer**: HTTP request/response handling, input validation
+- **Service Layer**: Business logic, data validation
+- **Store Layer**: Database operations, data integrity
+- **Middleware**: Cross-cutting concerns (logging, auth, context management)
+
+#### Error Handling
+- Consistent error responses with appropriate HTTP status codes
+- Detailed error messages in development
+- Secure error messages in production
+- Structured error logging
 
 **Example commits:**
 ```bash
