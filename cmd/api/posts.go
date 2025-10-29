@@ -21,6 +21,7 @@ type UpdatePostRequest struct {
 	Title   *string   `json:"title" validate:"omitempty,max=100"`
 	Content *string   `json:"content" validate:"omitempty,max=1000"`
 	Tags    *[]string `json:"tags" validate:"omitempty"`
+	Version *int32    `json:"version" validate:"omitempty"`
 }
 
 type postCtxKey struct{}
@@ -157,19 +158,41 @@ func getPostFromContext(r *http.Request) (*store.Post, error) {
 }
 
 func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
-	post, err := getPostFromContext(r)
+	// Get the post ID from the URL
+	idParam := chi.URLParam(r, "postID")
+	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
-		app.notFoundResponse(w, r, errors.New("post not found"))
+		app.badRequestResponse(w, r, errors.New("invalid post ID"))
 		return
 	}
 
+	// Parse the update request
 	var input UpdatePostRequest
 	if err := readJSON(w, r, &input); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
-	// Validate input
+	// Get a fresh copy of the post from the database
+	ctx := r.Context()
+	post, err := app.store.Posts.GetByID(ctx, id)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrNotFound):
+			app.notFoundResponse(w, r, errors.New("post not found"))
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	// Check version if provided
+	if input.Version != nil && *input.Version != post.Version {
+		app.errorResponse(w, http.StatusConflict, "edit conflict: post has been modified by another user")
+		return
+	}
+
+	// Apply updates
 	if input.Title != nil {
 		if *input.Title == "" {
 			app.badRequestResponse(w, r, errors.New("title cannot be empty"))
@@ -190,13 +213,29 @@ func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request
 		post.Tags = *input.Tags
 	}
 
-	ctx := r.Context()
+	// Attempt to update the post
 	if err := app.store.Posts.Update(ctx, post); err != nil {
+		switch {
+		case errors.Is(err, store.ErrEditConflict):
+			app.errorResponse(w, http.StatusConflict, "edit conflict: post has been modified by another user")
+			return
+		case errors.Is(err, store.ErrNotFound):
+			app.notFoundResponse(w, r, err)
+			return
+		default:
+			app.internalServerError(w, r, err)
+			return
+		}
+	}
+
+	// Get the updated post to return
+	updatedPost, err := app.store.Posts.GetByID(ctx, post.ID)
+	if err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
 
-	if err := writeJSON(w, http.StatusOK, post); err != nil {
+	if err := writeJSON(w, http.StatusOK, updatedPost); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }

@@ -27,6 +27,7 @@ A modern, high-performance social media API built with Go, featuring real-time c
   - **Error Handling** - Structured error responses with proper HTTP status codes
   - **Request Validation** - Input validation at multiple layers
   - **Partial Updates** - PATCH support with proper null handling
+  - **Optimistic Concurrency Control** - Version-based updates to prevent lost updates
 
 - 🚧 **In Progress**
   - User authentication
@@ -180,9 +181,33 @@ curl -X PATCH http://localhost:4000/v1/posts/1 \
   -d '{"title":"Updated Title"}'
 ```
 
+**Update a Post with Version Control:**
+```bash
+curl -X PATCH http://localhost:4000/v1/posts/1 \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Updated Title", "version": 5}'
+```
+
 **Health Check:**
 ```bash
 curl http://localhost:4000/v1/health
+```
+
+## 🔄 Concurrency Control
+
+The API implements optimistic concurrency control to handle concurrent updates to resources. When updating a post, include the current version number in the request. If the version on the server doesn't match the provided version, the update will be rejected with a `409 Conflict` status code.
+
+### How It Works
+1. Each post has a version number that increments with each update
+2. When updating a post, include the current version in the request
+3. The server verifies the version matches before applying updates
+4. If versions don't match, a 409 Conflict is returned
+
+### Error Response (409 Conflict)
+```json
+{
+    "error": "edit conflict: post has been modified by another user"
+}
 ```
 
 ## 🛠 Database Migrations

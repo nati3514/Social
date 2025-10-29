@@ -18,12 +18,17 @@ type Post struct {
 	Tags      []string  `json:"tags"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+	Version   int32     `json:"version"`
 	Comments  []Comment `json:"comments"`
 }
 
 type PostStore struct {
 	db *sql.DB
 }
+
+var (
+	ErrEditConflict = errors.New("edit conflict: post has been modified by another user")
+)
 
 func (s *PostStore) Create(ctx context.Context, post *Post) error {
 	query := `
@@ -53,7 +58,7 @@ func (s *PostStore) Create(ctx context.Context, post *Post) error {
 
 func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 	query := `
-	SELECT id, content, title, user_id, tags, created_at, updated_at
+	SELECT id, content, title, user_id, tags, created_at, updated_at, version
 	FROM posts
 	WHERE id = $1
 	`
@@ -68,6 +73,7 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 		pq.Array(&post.Tags),
 		&post.CreatedAt,
 		&post.UpdatedAt,
+		&post.Version,
 	); err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -105,15 +111,13 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 	}
 
 	query := `
-        UPDATE posts
-        SET title = $1, 
-            content = $2, 
-            tags = $3, 
-            updated_at = NOW()
-        WHERE id = $4
-        RETURNING updated_at
+        UPDATE posts 
+        SET title = $1, content = $2, tags = $3, version = version + 1, updated_at = NOW() 
+        WHERE id = $4 AND version = $5
+        RETURNING version, updated_at
     `
 
+	originalVersion := post.Version
 	err := s.db.QueryRowContext(
 		ctx,
 		query,
@@ -121,12 +125,17 @@ func (s *PostStore) Update(ctx context.Context, post *Post) error {
 		post.Content,
 		pq.Array(post.Tags),
 		post.ID,
-	).Scan(&post.UpdatedAt)
+		originalVersion,
+	).Scan(&post.Version, &post.UpdatedAt)
 
 	if err != nil {
-		return fmt.Errorf("updating post: %w", err)
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return fmt.Errorf("error updating post: %w", err)
+		}
 	}
-
 	return nil
 }
 
