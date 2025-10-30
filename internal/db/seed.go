@@ -115,7 +115,7 @@ var comments = [] string {
     "I learned something new today, thank you!",
 }
 
-func seed(store store.Storage)  {
+func Seed(store store.Storage)  {
 	ctx := context.Background()
 
 	users := generateUsers(100)
@@ -141,7 +141,7 @@ func seed(store store.Storage)  {
 		}
 	}
 
-	return 
+	log.Println("Database seeded successfully") 
 }
 
 func generateUsers(num int) []*store.User {
