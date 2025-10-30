@@ -17,8 +17,19 @@ function Show-Help {
     Write-Host "  create [name]  - Create new migration files"
     Write-Host "  up [steps]     - Apply migrations (default: 1, use 'all' for all)"
     Write-Host "  down [steps]   - Rollback migrations (default: 1, use 'all' for all)"
-    Write-Host "  version       - Show current migration version"
-    Write-Host "  help          - Show this help"
+    Write-Host "  seed           - Seed the database with test data"
+    Write-Host "  version        - Show current migration version"
+    Write-Host "  help           - Show this help"
+}
+
+function Invoke-Seed {
+    Write-Host "Seeding database..." -ForegroundColor Cyan
+    go run cmd/migrate/seed/main.go
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error seeding database" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "Database seeded successfully" -ForegroundColor Green
 }
 
 # Ensure migrations directory exists
@@ -27,59 +38,54 @@ if (-not (Test-Path -Path $MIGRATIONS_PATH)) {
     Write-Host "Created migrations directory at $MIGRATIONS_PATH"
 }
 
-# Execute migration command
-switch ($action.ToLower()) {
-    "create" {
-        if (-not $name) {
-            Write-Host "Error: Migration name is required" -ForegroundColor Red
-            Show-Help
-            exit 1
-        }
-        Write-Host "Creating new migration: $name" -ForegroundColor Cyan
-        $fullPath = Join-Path -Path $PSScriptRoot -ChildPath $MIGRATIONS_PATH
-        $unixPath = $fullPath.Replace("\", "/")
-        migrate create -ext sql -dir "$unixPath" -seq $name
-    }
-    "up" {
-        Write-Host "Applying migrations..." -ForegroundColor Cyan
-        $dbUrl = "postgres://postgres:12345@localhost:5432/social?sslmode=disable"
-        $fullPath = Join-Path -Path $PSScriptRoot -ChildPath $MIGRATIONS_PATH
-        $unixPath = $fullPath.Replace("\", "/")
-        if ($steps -eq "all") {
-            migrate -path="$unixPath" -database "$dbUrl" up
-        } else {
-            migrate -path="$unixPath" -database "$dbUrl" up $steps
-        }
-    }
-    "down" {
-        Write-Host "Rolling back migrations..." -ForegroundColor Yellow
-        $dbUrl = "postgres://postgres:12345@localhost:5432/social?sslmode=disable"
-        $fullPath = Join-Path -Path $PSScriptRoot -ChildPath $MIGRATIONS_PATH
-        $unixPath = $fullPath.Replace("\", "/")
-        if ($steps -eq "all") {
-            migrate -path="$unixPath" -database "$dbUrl" down
-        } else {
-            migrate -path="$unixPath" -database "$dbUrl" down $steps
-        }
-    }
-    "version" {
-        Write-Host "Current migration version:" -ForegroundColor Cyan
-        $dbUrl = "postgres://postgres:12345@localhost:5432/social?sslmode=disable"
-        $fullPath = Join-Path -Path $PSScriptRoot -ChildPath $MIGRATIONS_PATH
-        $unixPath = $fullPath.Replace("\", "/")
-        migrate -path="$unixPath" -database "$dbUrl" version
-    }
-    "help" {
+function Invoke-CreateMigration {
+    param([string]$name)
+    if ([string]::IsNullOrEmpty($name)) {
+        Write-Host "Error: Migration name is required" -ForegroundColor Red
         Show-Help
+        exit 1
     }
+    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+    $fileName = "${timestamp}_${name}.sql"
+    $upPath = Join-Path $MIGRATIONS_PATH "..\migrations\$($timestamp)_${name}.up.sql"
+    $downPath = Join-Path $MIGRATIONS_PATH "..\migrations\$($timestamp)_${name}.down.sql"
+    
+    # Create empty migration files
+    Set-Content -Path $upPath -Value "-- Write your UP migration SQL here"
+    Set-Content -Path $downPath -Value "-- Write your DOWN migration SQL here"
+    
+    Write-Host "Created migration files:" -ForegroundColor Green
+    Write-Host "  UP:   $upPath"
+    Write-Host "  DOWN: $downPath"
+}
+
+function Invoke-MigrateUp {
+    param([string]$steps = "1")
+    $stepParam = if ($steps -eq "all") { "" } else { "-step $steps" }
+    migrate -path=$MIGRATIONS_PATH -database=$DB_URL up $stepParam
+}
+
+function Invoke-MigrateDown {
+    param([string]$steps = "1")
+    $stepParam = if ($steps -eq "all") { "" } else { "-step $steps" }
+    migrate -path=$MIGRATIONS_PATH -database=$DB_URL down $stepParam
+}
+
+function Get-CurrentVersion {
+    migrate -path=$MIGRATIONS_PATH -database=$DB_URL version
+}
+
+# Main script execution
+switch ($action.ToLower()) {
+    "create" { Invoke-CreateMigration -name $name }
+    "up" { Invoke-MigrateUp -steps $steps }
+    "down" { Invoke-MigrateDown -steps $steps }
+    "version" { Get-CurrentVersion }
+    "seed" { Invoke-Seed }
+    "help" { Show-Help }
     default {
         Write-Host "Unknown action: $action" -ForegroundColor Red
         Show-Help
         exit 1
     }
-}
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error: Migration command failed with code $LASTEXITCODE" -ForegroundColor Red
-    exit $LASTEXITCODE
 }

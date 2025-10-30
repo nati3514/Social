@@ -118,10 +118,12 @@ Social/
 │   │   ├── main.go          # Application entry point
 │   │   ├── api.go           # Server setup and routing
 │   │   └── health.go        # Health check handler
-│   └── migrate/             # Database migrations
-│       └── migrations/      # Migration files
-│           ├── *.up.sql     # SQL for applying migrations
-│           └── *.down.sql   # SQL for rolling back migrations
+│   └── migrate/             # Database migration and seeding
+│       └── seed/            # Database seeding
+│           └── main.go      # Seed data generation
+├── migrations/              # Database migration files
+│   ├── *.up.sql            # SQL for applying migrations
+│   └── *.down.sql          # SQL for rolling back migrations
 ├── internal/
 │   ├── db/                  # Database connection and setup
 │   ├── env/                 # Environment variable helpers
@@ -210,6 +212,34 @@ The API implements optimistic concurrency control to handle concurrent updates t
 }
 ```
 
+## Database Seeding
+
+The application includes a database seeding system to generate test data for development and testing. The seeder creates realistic-looking users, posts, and comments with varied content.
+
+### Running the Seeder
+
+#### Using PowerShell:
+```powershell
+.\migrate.ps1 seed
+```
+
+#### Using Make:
+```bash
+make seed
+```
+
+### Seeding Details
+- Creates 100 random users with realistic names and email addresses
+- Generates 20 posts with varied content and tags
+- Creates 20 comments on random posts
+- Includes proper error handling and logging
+
+### Example Output
+```bash
+Seeding database...
+2025/10/30 17:12:57 Database seeded successfully
+```
+
 ## 🛠 Database Migrations
 
 ### Windows
@@ -225,6 +255,9 @@ The API implements optimistic concurrency control to handle concurrent updates t
 
 # Check migration status
 .\migrate.ps1 version
+
+# Seed the database with test data
+.\migrate.ps1 seed
 ```
 
 ### Linux/macOS
@@ -240,6 +273,9 @@ migrate -path=cmd/migrate/migrations -database "postgres://user:password@localho
 
 # Rollback last migration
 migrate -path=cmd/migrate/migrations -database "postgres://user:password@localhost:5432/dbname?sslmode=disable" down 1
+
+# Seed the database with test data
+make seed
 ```
 
 ## 🧪 Development
