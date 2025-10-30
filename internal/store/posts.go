@@ -90,6 +90,9 @@ func (s *PostStore) Delete(ctx context.Context, postID int64) error {
     DELETE FROM posts
     WHERE id = $1
     `
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	
 	res, err := s.db.ExecContext(ctx, query, postID)
 	if err != nil {
 		return err
