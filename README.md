@@ -22,6 +22,7 @@ A modern, high-performance social media API built with Go, featuring real-time c
 - ✅ **API Features**
   - **RESTful JSON API** with consistent response format
   - **Post Management** - Full CRUD operations
+  - **User Profiles** - View user details and activity
   - **Comment System** - Nested comments on posts
   - **Context Middleware** - Efficient resource loading
   - **Error Handling** - Structured error responses with proper HTTP status codes
@@ -162,6 +163,11 @@ Social/
 |--------|----------|-------------|--------|
 | `GET` | `/v1/health` | Health check | ✅ Implemented |
 
+#### Users
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| `GET` | `/v1/users/{userID}` | Get user profile | ✅ Implemented |
+
 ### Example Usage
 
 **Create a Post:**
@@ -193,6 +199,29 @@ curl -X PATCH http://localhost:4000/v1/posts/1 \
 **Health Check:**
 ```bash
 curl http://localhost:4000/v1/health
+```
+
+**Get User Profile:**
+```bash
+# Get user by ID
+curl http://localhost:4000/v1/users/1
+
+# Response
+{
+  "data": {
+    "id": 1,
+    "name": "Nati Age",
+    "email": "nati@example.com",
+    "created_at": "2023-10-31T10:00:00Z"
+  }
+}
+
+# User not found
+{
+  "data": {
+    "error": "record not found"
+  }
+}
 ```
 
 ## 🔄 Concurrency Control
