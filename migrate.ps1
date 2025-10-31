@@ -5,8 +5,8 @@ param(
 )
 
 # Configuration
-$MIGRATIONS_PATH = "cmd\migrate\migrations"
-$DB_URL = "postgresql://postgres:12345@localhost:5432/social?sslmode=disable"
+$MIGRATIONS_PATH = "cmd/migrate/migrations"
+$DB_URL = "postgres://postgres:12345@localhost:5432/social?sslmode=disable"
 
 function Show-Help {
     Write-Host "Social App Migration Tool"
@@ -32,10 +32,50 @@ function Invoke-Seed {
     Write-Host "Database seeded successfully" -ForegroundColor Green
 }
 
-# Ensure migrations directory exists
-if (-not (Test-Path -Path $MIGRATIONS_PATH)) {
-    New-Item -ItemType Directory -Path $MIGRATIONS_PATH -Force | Out-Null
-    Write-Host "Created migrations directory at $MIGRATIONS_PATH"
+function Invoke-Migrate {
+    param(
+        [string]$direction,
+        [string]$steps
+    )
+
+    # Ensure migrations directory exists
+    if (-not (Test-Path -Path $MIGRATIONS_PATH)) {
+        New-Item -ItemType Directory -Path $MIGRATIONS_PATH -Force | Out-Null
+        Write-Host "Created migrations directory at $MIGRATIONS_PATH"
+    }
+
+    $migrateCmd = "migrate"
+    if (-not (Get-Command $migrateCmd -ErrorAction SilentlyContinue)) {
+        $migrateCmd = "$env:GOPATH\bin\migrate"
+    }
+
+    # Get absolute path and normalize slashes
+    $absPath = (Resolve-Path $MIGRATIONS_PATH -ErrorAction SilentlyContinue)
+    if (-not $absPath) {
+        $absPath = $MIGRATIONS_PATH
+    } else {
+        $absPath = $absPath.Path
+    }
+    $absPath = $absPath -replace '\\', '/'
+
+    # Build the command
+    $cmd = "$migrateCmd -path=`"$absPath`" -database=`"$DB_URL`" $direction"
+    if ($steps -ne "all") {
+        $cmd += " $steps"
+    }
+
+    Write-Host "Running: $cmd" -ForegroundColor Cyan
+    $ErrorActionPreference = "Stop"
+    try {
+        Invoke-Expression $cmd
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Error running migration" -ForegroundColor Red
+            exit 1
+        }
+    } catch {
+        Write-Host "Migration error: $_" -ForegroundColor Red
+        exit 1
+    }
 }
 
 function Invoke-CreateMigration {
@@ -46,46 +86,38 @@ function Invoke-CreateMigration {
         exit 1
     }
     $timestamp = Get-Date -Format "yyyyMMddHHmmss"
-    $fileName = "${timestamp}_${name}.sql"
-    $upPath = Join-Path $MIGRATIONS_PATH "..\migrations\$($timestamp)_${name}.up.sql"
-    $downPath = Join-Path $MIGRATIONS_PATH "..\migrations\$($timestamp)_${name}.down.sql"
+    $upPath = Join-Path $MIGRATIONS_PATH "${timestamp}_${name}.up.sql"
+    $downPath = Join-Path $MIGRATIONS_PATH "${timestamp}_${name}.down.sql"
     
-    # Create empty migration files
-    Set-Content -Path $upPath -Value "-- Write your UP migration SQL here"
-    Set-Content -Path $downPath -Value "-- Write your DOWN migration SQL here"
+    "# Add your SQL for migrating up" | Out-File -FilePath $upPath -Encoding utf8
+    "# Add your SQL for rolling back" | Out-File -FilePath $downPath -Encoding utf8
     
     Write-Host "Created migration files:" -ForegroundColor Green
-    Write-Host "  UP:   $upPath"
-    Write-Host "  DOWN: $downPath"
+    Write-Host "  $upPath"
+    Write-Host "  $downPath"
 }
 
-function Invoke-MigrateUp {
-    param([string]$steps = "1")
-    $stepParam = if ($steps -eq "all") { "" } else { "-step $steps" }
-    migrate -path=$MIGRATIONS_PATH -database=$DB_URL up $stepParam
-}
-
-function Invoke-MigrateDown {
-    param([string]$steps = "1")
-    $stepParam = if ($steps -eq "all") { "" } else { "-step $steps" }
-    migrate -path=$MIGRATIONS_PATH -database=$DB_URL down $stepParam
-}
-
-function Get-CurrentVersion {
-    migrate -path=$MIGRATIONS_PATH -database=$DB_URL version
-}
-
-# Main script execution
-switch ($action.ToLower()) {
-    "create" { Invoke-CreateMigration -name $name }
-    "up" { Invoke-MigrateUp -steps $steps }
-    "down" { Invoke-MigrateDown -steps $steps }
-    "version" { Get-CurrentVersion }
-    "seed" { Invoke-Seed }
-    "help" { Show-Help }
-    default {
-        Write-Host "Unknown action: $action" -ForegroundColor Red
-        Show-Help
-        exit 1
+# Main execution
+try {
+    switch ($action.ToLower()) {
+        "create" { Invoke-CreateMigration $name }
+        "up" { Invoke-Migrate "up" $steps }
+        "down" { Invoke-Migrate "down" $steps }
+        "seed" { Invoke-Seed }
+        "version" { 
+            $absPath = (Resolve-Path $MIGRATIONS_PATH -ErrorAction SilentlyContinue)
+            if (-not $absPath) { $absPath = $MIGRATIONS_PATH }
+            $absPath = $absPath -replace '\\', '/'
+            migrate -path="$absPath" -database="$DB_URL" version 
+        }
+        "help" { Show-Help }
+        default {
+            Write-Host "Unknown action: $action" -ForegroundColor Red
+            Show-Help
+            exit 1
+        }
     }
+} catch {
+    Write-Host "An error occurred: $_" -ForegroundColor Red
+    exit 1
 }
