@@ -167,6 +167,8 @@ Social/
 | Method | Endpoint | Description | Status |
 |--------|----------|-------------|--------|
 | `GET` | `/v1/users/{userID}` | Get user profile | ✅ Implemented |
+| `PUT` | `/v1/users/{userID}/follow` | Follow a user | ✅ Implemented |
+| `PUT` | `/v1/users/{userID}/unfollow` | Unfollow a user | ✅ Implemented |
 
 ### Example Usage
 
@@ -201,25 +203,43 @@ curl -X PATCH http://localhost:4000/v1/posts/1 \
 curl http://localhost:4000/v1/health
 ```
 
-**Get User Profile:**
+**User Operations:**
+
 ```bash
 # Get user by ID
 curl http://localhost:4000/v1/users/1
 
-# Response
+# Follow a user
+curl -X PUT http://localhost:4000/v1/users/2/follow \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1}'
+
+# Unfollow a user
+curl -X PUT http://localhost:4000/v1/users/2/unfollow \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1}'
+
+# Successful response (204 No Content for follow/unfollow)
+# No content in response body
+
+# Error responses:
+# Already following (409 Conflict)
+{
+  "error": "record already exists"
+}
+
+# User not found (404 Not Found)
+{
+  "error": "record not found"
+}
+
+# Get user profile response (200 OK)
 {
   "data": {
     "id": 1,
     "name": "Nati Age",
     "email": "nati@example.com",
     "created_at": "2023-10-31T10:00:00Z"
-  }
-}
-
-# User not found
-{
-  "data": {
-    "error": "record not found"
   }
 }
 ```
