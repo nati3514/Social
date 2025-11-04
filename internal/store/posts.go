@@ -20,11 +20,61 @@ type Post struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Version   int32     `json:"version"`
 	Comments  []Comment `json:"comments"`
+	User      User      `json:"user"`
+}
+
+type PostWithMetadata struct {
+	Post 
+	CommentCount int `json:"comment_count"`
 }
 
 type PostStore struct {
 	db *sql.DB
 }
+
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]*PostWithMetadata, error) {
+	query := `
+	SELECT p.id, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version, COUNT(c.id) AS comment_count
+	FROM posts p
+	LEFT JOIN comments c ON p.id = c.post_id
+	WHERE p.user_id IN (
+		SELECT user_id
+		FROM followers
+		WHERE follower_id = $1
+	)
+	GROUP BY p.id, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version
+	ORDER BY p.created_at DESC
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []*PostWithMetadata
+	for rows.Next() {
+		var post PostWithMetadata
+		if err := rows.Scan(
+			&post.ID,
+			&post.Content,
+			&post.Title,
+			&post.UserID,
+			pq.Array(&post.Tags),
+			&post.CreatedAt,
+			&post.UpdatedAt,
+			&post.Version,
+			&post.CommentCount,
+		); err != nil {
+			return nil, err
+		}
+		posts = append(posts, &post)
+	}
+	return posts, nil
+}
+
 
 var (
 	ErrEditConflict = errors.New("edit conflict: post has been modified by another user")
