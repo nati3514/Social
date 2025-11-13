@@ -16,9 +16,11 @@ function Show-Help {
     Write-Host "Actions:"
     Write-Host "  create [name]  - Create new migration files"
     Write-Host "  up [steps]     - Apply migrations (default: 1, use 'all' for all)"
+    Write-Host "                 Use 'up all' to apply all pending migrations"
     Write-Host "  down [steps]   - Rollback migrations (default: 1, use 'all' for all)"
     Write-Host "  seed           - Seed the database with test data"
     Write-Host "  version        - Show current migration version"
+    Write-Host "  force [version] - Force mark a specific version as complete"
     Write-Host "  help           - Show this help"
 }
 
@@ -109,6 +111,24 @@ try {
             if (-not $absPath) { $absPath = $MIGRATIONS_PATH }
             $absPath = $absPath -replace '\\', '/'
             migrate -path="$absPath" -database="$DB_URL" version 
+        }
+        "force" {
+            if ([string]::IsNullOrEmpty($name)) {
+                Write-Host "Error: Version number is required for force command" -ForegroundColor Red
+                Show-Help
+                exit 1
+            }
+            $absPath = (Resolve-Path $MIGRATIONS_PATH -ErrorAction SilentlyContinue)
+            if (-not $absPath) { $absPath = $MIGRATIONS_PATH }
+            $absPath = $absPath -replace '\\', '/'
+            
+            Write-Host "Forcing version $name..." -ForegroundColor Yellow
+            migrate -path="$absPath" -database="$DB_URL" force $name
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "Error forcing version" -ForegroundColor Red
+                exit 1
+            }
+            Write-Host "Successfully forced version $name" -ForegroundColor Green
         }
         "help" { Show-Help }
         default {

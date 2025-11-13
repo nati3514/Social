@@ -10,7 +10,7 @@ A modern, high-performance social media API built with Go, featuring real-time c
 
 ## 🚀 Features
 
-### Current Features (v0.4.0)
+### Current Features (v0.5.0)
 - ✅ **Core Infrastructure**
   - Health Check Endpoint
   - Chi Router with context middleware
@@ -18,36 +18,36 @@ A modern, high-performance social media API built with Go, featuring real-time c
   - Structured logging with request IDs
   - Database migrations with versioning
   - **Multi-layer Validation** with `go-playground/validator`
+  - **Database Search Optimization** - pg_trgm extension and GIN indexes
 
 - ✅ **API Features**
   - **RESTful JSON API** with consistent response format
   - **Post Management** - Full CRUD operations
   - **User Profiles** - View user details and activity
-  - **Comment System** - Nested comments on posts
+  - **Comment System** - Nested comments on posts with counts
+  - **User Feed** - Personalized content feed with metadata
+  - **Search** - Optimized search across posts and users
   - **Context Middleware** - Efficient resource loading
   - **Error Handling** - Structured error responses with proper HTTP status codes
   - **Request Validation** - Input validation at multiple layers
   - **Partial Updates** - PATCH support with proper null handling
   - **Optimistic Concurrency Control** - Version-based updates to prevent lost updates
 
-- 🚧 **In Progress**
-  - User authentication
-  - Comments system
-  - Real-time notifications
 - ✅ **Repository Pattern** - Clean data access layer
+- ✅ **Database Optimization**
+  - GIN indexes for text search
+  - Query optimization for feed generation
+  - Efficient data loading with proper joins
 
 ### Planned Features
 - [ ] User authentication & authorization (JWT)
 - [ ] User registration & login
-- [ ] Post creation, editing, and deletion
-- [ ] Comments system
 - [ ] Like/Unlike functionality
-- [ ] Follow/Unfollow users
-- [ ] User profiles
-- [ ] Feed generation
-- [ ] Search functionality
+- [ ] Real-time notifications
 - [ ] Rate limiting
 - [ ] Redis caching
+- [ ] Advanced search filters
+- [ ] Search result highlighting
 - [ ] File upload (images/videos)
 - [ ] Real-time notifications
 - [ ] Docker support
@@ -152,6 +152,8 @@ Social/
 | `GET` | `/v1/posts/{id}` | Get a specific post with comments | ✅ Implemented |
 | `PATCH` | `/v1/posts/{id}` | Partially update a post | ✅ Implemented |
 | `DELETE` | `/v1/posts/{id}` | Delete a post | ✅ Implemented |
+| `GET` | `/v1/users/feed` | Get user's personalized feed | ✅ Implemented |
+| `GET` | `/v1/search?q=term` | Search across posts and users | ✅ Implemented |
 
 #### Comments
 | Method | Endpoint | Description | Status |

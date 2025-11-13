@@ -20,10 +20,79 @@ type Post struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Version   int32     `json:"version"`
 	Comments  []Comment `json:"comments"`
+	User      User      `json:"user"`
+}
+
+type PostWithMetadata struct {
+	Post
+	CommentCount int `json:"comment_count"`
 }
 
 type PostStore struct {
 	db *sql.DB
+}
+
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetadata, error) {
+	query := `
+    SELECT p.id, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version, 
+           COUNT(c.id) AS comment_count, u.username
+    FROM posts p
+    LEFT JOIN comments c ON p.id = c.post_id
+    LEFT JOIN users u ON p.user_id = u.id
+    WHERE p.user_id = $1 
+       OR p.user_id IN (
+           SELECT user_id
+           FROM followers
+           WHERE follower_id = $1
+       )
+    GROUP BY p.id, u.username, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version
+    ORDER BY p.created_at DESC
+    LIMIT 20
+    `
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var feed []PostWithMetadata
+	for rows.Next() {
+		var p PostWithMetadata
+		var username sql.NullString // Handle potential NULL usernames
+		// Initialize the embedded Post and User structs
+		p.Post = Post{}
+		p.Post.User = User{}
+		
+		if err := rows.Scan(
+			&p.ID,
+			&p.Content,
+			&p.Title,
+			&p.UserID,
+			pq.Array(&p.Tags),
+			&p.CreatedAt,
+			&p.UpdatedAt,
+			&p.Version,
+			&p.CommentCount,
+			&username, // Scan the username
+		); err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+		
+		// Set the username in the embedded User struct
+		if username.Valid {
+			p.Post.User.Username = username.String
+		}
+		
+		feed = append(feed, p)
+	}
+	
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %w", err)
+	}
+	return feed, nil
 }
 
 var (
@@ -66,7 +135,6 @@ func (s *PostStore) GetByID(ctx context.Context, id int64) (*Post, error) {
 	`
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
-
 
 	row := s.db.QueryRowContext(ctx, query, id)
 	var post Post
