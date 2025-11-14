@@ -32,7 +32,7 @@ type PostStore struct {
 	db *sql.DB
 }
 
-func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMetadata, error) {
+func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, fq PaginatedFeedQuery) ([]PostWithMetadata, error) {
 	query := `
     SELECT p.id, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version, 
            COUNT(c.id) AS comment_count, u.username
@@ -46,13 +46,13 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMe
            WHERE follower_id = $1
        )
     GROUP BY p.id, u.username, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version
-    ORDER BY p.created_at DESC
-    LIMIT 20
+    ORDER BY p.created_at ` + fq.Sort + `
+    LIMIT $2 OFFSET $3
     `
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	rows, err := s.db.QueryContext(ctx, query, userID)
+	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMe
 		// Initialize the embedded Post and User structs
 		p.Post = Post{}
 		p.Post.User = User{}
-		
+
 		if err := rows.Scan(
 			&p.ID,
 			&p.Content,
@@ -80,15 +80,15 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userID int64) ([]PostWithMe
 		); err != nil {
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
-		
+
 		// Set the username in the embedded User struct
 		if username.Valid {
 			p.Post.User.Username = username.String
 		}
-		
+
 		feed = append(feed, p)
 	}
-	
+
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating rows: %w", err)
 	}

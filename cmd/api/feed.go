@@ -3,11 +3,13 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/nati3514/Social/internal/store"
 )
 
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
 	//pagination, filters, sort
-	fq := PaginatedFeedQuery{
+	fq := store.PaginatedFeedQuery{
 		Limit: 20,
 		Offset: 0,
 		Sort: "desc",
@@ -23,7 +25,7 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 		app.badRequestResponse(w, r, err)
 		return
 	}
-	
+
 	ctx := r.Context()
 	
 	// For now, we're using user ID 1 for testing
@@ -32,7 +34,7 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 	
 	log.Printf("Fetching feed for user ID: %d\n", userID)
 	
-	feed, err := app.store.Posts.GetUserFeed(ctx, userID)
+	feed, err := app.store.Posts.GetUserFeed(ctx, userID, fq)
 	if err != nil {
 		log.Printf("Error fetching feed for user %d: %v\n", userID, err)
 		app.internalServerError(w, r, err)
