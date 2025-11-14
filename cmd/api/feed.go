@@ -6,6 +6,24 @@ import (
 )
 
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
+	//pagination, filters, sort
+	fq := PaginatedFeedQuery{
+		Limit: 20,
+		Offset: 0,
+		Sort: "desc",
+	}
+
+	fq, err := fq.Parse(r)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	if err := Validate.Struct(fq); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	
 	ctx := r.Context()
 	
 	// For now, we're using user ID 1 for testing
