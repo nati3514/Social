@@ -34,65 +34,67 @@ type PostStore struct {
 
 func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, fq PaginatedFeedQuery) ([]PostWithMetadata, error) {
 	query := `
-    SELECT p.id, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version, 
-           COUNT(c.id) AS comment_count, u.username
+    SELECT 
+        p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags, 
+        u.username,
+        COUNT(DISTINCT c.id) AS comment_count
     FROM posts p
-    LEFT JOIN comments c ON p.id = c.post_id
+    LEFT JOIN comments c ON c.post_id = p.id
     LEFT JOIN users u ON p.user_id = u.id
-    WHERE p.user_id = $1 
-       OR p.user_id IN (
-           SELECT user_id
-           FROM followers
-           WHERE follower_id = $1
-       )
-    GROUP BY p.id, u.username, p.content, p.title, p.user_id, p.tags, p.created_at, p.updated_at, p.version
+    LEFT JOIN followers f ON f.user_id = p.user_id
+    WHERE 
+        (f.follower_id = $1 OR p.user_id = $1) AND
+        ($4 = '' OR 
+         p.title ILIKE '%' || $4 || '%' OR 
+         p.content ILIKE '%' || $4 || '%')
+    GROUP BY p.id, u.username, p.user_id, p.title, p.content, p.created_at, p.version, p.tags
     ORDER BY p.created_at ` + fq.Sort + `
     LIMIT $2 OFFSET $3
     `
+
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset)
+	// Prepare the search term
+	searchTerm := fq.Search
+	if searchTerm == "" {
+		searchTerm = "%" // Match anything if search is empty
+	} else {
+		searchTerm = "%" + searchTerm + "%"
+	}
+
+	// Execute the query with the prepared search term
+	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset, searchTerm)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error executing query: %w", err)
 	}
 	defer rows.Close()
 
-	var feed []PostWithMetadata
+	var posts []PostWithMetadata
 	for rows.Next() {
-		var p PostWithMetadata
-		var username sql.NullString // Handle potential NULL usernames
-		// Initialize the embedded Post and User structs
-		p.Post = Post{}
-		p.Post.User = User{}
-
-		if err := rows.Scan(
-			&p.ID,
-			&p.Content,
-			&p.Title,
-			&p.UserID,
-			pq.Array(&p.Tags),
-			&p.CreatedAt,
-			&p.UpdatedAt,
-			&p.Version,
-			&p.CommentCount,
-			&username, // Scan the username
-		); err != nil {
+		var post PostWithMetadata
+		err := rows.Scan(
+			&post.ID,
+			&post.UserID,
+			&post.Title,
+			&post.Content,
+			&post.CreatedAt,
+			&post.Version,
+			pq.Array(&post.Tags),
+			&post.User.Username,
+			&post.CommentCount,
+		)
+		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
-
-		// Set the username in the embedded User struct
-		if username.Valid {
-			p.Post.User.Username = username.String
-		}
-
-		feed = append(feed, p)
+		posts = append(posts, post)
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating rows: %w", err)
 	}
-	return feed, nil
+
+	return posts, nil
 }
 
 var (
