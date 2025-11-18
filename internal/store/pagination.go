@@ -3,7 +3,6 @@ package store
 import (
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -45,7 +44,8 @@ func (fq PaginatedFeedQuery) Parse(r *http.Request) (PaginatedFeedQuery, error) 
 
 	tags := qs.Get("tags")
 	if tags != "" {
-		fq.Tags = strings.Split(tags, ",")
+		// For a single tag, we'll use it for partial matching
+		fq.Tags = []string{"%" + tags + "%"}
 	}
 
 	search := qs.Get("search")
@@ -54,10 +54,10 @@ func (fq PaginatedFeedQuery) Parse(r *http.Request) (PaginatedFeedQuery, error) 
 	}
 
 	since := qs.Get("since")
-		if since != "" {
-			fq.Since = parseTime(since)
-		}
-	
+	if since != "" {
+		fq.Since = parseTime(since)
+	}
+
 	until := qs.Get("until")
 	if until != "" {
 		fq.Until = parseTime(until)
@@ -66,12 +66,10 @@ func (fq PaginatedFeedQuery) Parse(r *http.Request) (PaginatedFeedQuery, error) 
 	return fq, nil
 }
 
-
-
 func parseTime(s string) string {
-		t, err := time.Parse(time.DateTime, s)
-		if err != nil {
-			return ""
-		}
-		return t.Format(time.DateTime)
+	t, err := time.Parse(time.DateTime, s)
+	if err != nil {
+		return ""
 	}
+	return t.Format(time.DateTime)
+}

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"strconv"
 	"time"
 
 	"github.com/lib/pq"
@@ -33,6 +35,7 @@ type PostStore struct {
 }
 
 func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, fq PaginatedFeedQuery) ([]PostWithMetadata, error) {
+	// Build the query with dynamic conditions
 	query := `
     SELECT 
         p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags, 
@@ -43,29 +46,50 @@ func (s *PostStore) GetUserFeed(ctx context.Context, userID int64, fq PaginatedF
     LEFT JOIN users u ON p.user_id = u.id
     LEFT JOIN followers f ON f.user_id = p.user_id
     WHERE 
-        (f.follower_id = $1 OR p.user_id = $1) AND
-        ($4 = '' OR 
-         p.title ILIKE '%' || $4 || '%' OR 
-         p.content ILIKE '%' || $4 || '%')
+        (f.follower_id = $1 OR p.user_id = $1) 
+    `
+
+	// Track parameters for the query
+	var params []interface{}
+	params = append(params, userID)
+
+	// Add search condition if needed
+	searchTerm := ""
+	if fq.Search != "" {
+		query += ` AND (p.title ILIKE $` + strconv.Itoa(len(params)+1) + ` OR p.content ILIKE $` + strconv.Itoa(len(params)+1) + `)`
+		searchTerm = "%" + fq.Search + "%"
+		params = append(params, searchTerm)
+	}
+
+	// Add tags condition if needed
+	if len(fq.Tags) > 0 {
+		// Use EXISTS with LIKE for partial tag matching
+		for _, tag := range fq.Tags {
+			query += ` AND EXISTS (
+				SELECT 1 FROM unnest(p.tags) AS t 
+				WHERE t ILIKE $` + strconv.Itoa(len(params)+1) + `
+			)`
+			params = append(params, tag)
+		}
+	}
+
+	// Add GROUP BY, ORDER BY, and LIMIT/OFFSET
+	query += `
     GROUP BY p.id, u.username, p.user_id, p.title, p.content, p.created_at, p.version, p.tags
     ORDER BY p.created_at ` + fq.Sort + `
-    LIMIT $2 OFFSET $3
+    LIMIT ` + strconv.Itoa(fq.Limit) + ` OFFSET ` + strconv.Itoa(fq.Offset) + `
     `
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
 	defer cancel()
 
-	// Prepare the search term
-	searchTerm := fq.Search
-	if searchTerm == "" {
-		searchTerm = "%" // Match anything if search is empty
-	} else {
-		searchTerm = "%" + searchTerm + "%"
-	}
+	// Log the query and parameters for debugging
+	log.Printf("Executing query:\n%s\nWith params: %+v\n", query, params)
 
-	// Execute the query with the prepared search term
-	rows, err := s.db.QueryContext(ctx, query, userID, fq.Limit, fq.Offset, searchTerm)
+	// Execute the query with parameters
+	rows, err := s.db.QueryContext(ctx, query, params...)
 	if err != nil {
+		log.Printf("Query execution error: %v\nQuery: %s\nParams: %+v", err, query, params)
 		return nil, fmt.Errorf("error executing query: %w", err)
 	}
 	defer rows.Close()
