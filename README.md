@@ -152,8 +152,51 @@ Social/
 | `GET` | `/v1/posts/{id}` | Get a specific post with comments | ✅ Implemented |
 | `PATCH` | `/v1/posts/{id}` | Partially update a post | ✅ Implemented |
 | `DELETE` | `/v1/posts/{id}` | Delete a post | ✅ Implemented |
-| `GET` | `/v1/users/feed` | Get user's personalized feed | ✅ Implemented |
+| `GET` | `/v1/users/feed` | Get user's personalized feed with filtering | ✅ Implemented |
 | `GET` | `/v1/search?q=term` | Search across posts and users | ✅ Implemented |
+
+#### Feed Endpoint
+
+The feed endpoint (`/v1/users/feed`) supports advanced filtering, sorting, and pagination:
+
+**Query Parameters:**
+- `limit` (optional, default: 20): Number of items to return per page
+- `offset` (optional, default: 0): Number of items to skip
+- `sort` (optional, default: "desc"): Sort order ("asc" or "desc")
+- `search` (optional): Search term to filter posts by title or content
+- `tags` (optional): Filter posts by tags (supports partial matching)
+- `since` (optional, ISO 8601 format): Only return posts after this date
+- `until` (optional, ISO 8601 format): Only return posts before this date
+
+**Examples:**
+
+1. Basic pagination:
+   ```
+   GET /v1/users/feed?limit=10&offset=0
+   ```
+
+2. Search in feed:
+   ```
+   GET /v1/users/feed?search=scaling
+   ```
+
+3. Filter by tags (partial match):
+   ```
+   GET /v1/users/feed?tags=Innovation
+   ```
+
+4. Combined filters with date range:
+   ```
+   GET /v1/users/feed?search=go&tags=backend&since=2025-11-01&until=2025-11-30&sort=asc
+   ```
+
+**Features:**
+- 🔍 Full-text search in post titles and content
+- 🏷️ Partial tag matching (case-insensitive)
+- 📅 Date range filtering
+- 📊 Pagination support
+- 🔄 Sorting by creation date
+- 🛡️ Input validation and sanitization
 
 #### Comments
 | Method | Endpoint | Description | Status |
