@@ -7,13 +7,13 @@ import (
 
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
 	// For now, we're using user ID 1 for testing
 	// In a real app, you'd get this from the authenticated user's session
 	userID := int64(1)
-	
+
 	log.Printf("Fetching feed for user ID: %d\n", userID)
-	
+
 	feed, err := app.store.Posts.GetUserFeed(ctx, userID)
 	if err != nil {
 		log.Printf("Error fetching feed for user %d: %v\n", userID, err)
@@ -22,7 +22,7 @@ func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	log.Printf("Successfully fetched %d posts for user ID: %d\n", len(feed), userID)
-	
+
 	if err := app.jsonResponse(w, http.StatusOK, map[string]interface{}{
 		"status": "success",
 		"data":   feed,

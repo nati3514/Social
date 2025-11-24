@@ -12,6 +12,25 @@ import (
 
 const version = "0.0.1"
 
+//	@title			Swagger Example API
+//	@version		1.0
+//	@description	This is a sample server Petstore server.
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host						petstore.swagger.io
+// @BasePath					/v2
+//
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description
 func main() {
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
@@ -21,6 +40,7 @@ func main() {
 	// Initialize configuration
 	cfg := config{
 		addr: env.GetString("ADDR", ":8080"),
+		apiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
 		db: dbConfig{
 			addr:         "postgres://postgres:12345@localhost:5432/social?sslmode=disable",
 			maxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 30),
