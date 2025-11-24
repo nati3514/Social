@@ -18,3 +18,4 @@ migrate-down:
 seed:
     @echo "Seeding database..."
     @go run cmd/migrate/seed/main.go
+

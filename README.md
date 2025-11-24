@@ -186,26 +186,171 @@ curl -X POST http://localhost:4000/v1/posts \
 curl http://localhost:4000/v1/posts/1
 ```
 
-**Update a Post (Partial Update):**
+# Social Media API
+
+A high-performance social media API built with Go, Chi router, and PostgreSQL, featuring Swagger documentation.
+
+## Features
+
+- **RESTful API** with proper HTTP methods and status codes
+- **Swagger/OpenAPI** interactive documentation
+- **JWT Authentication** for secure endpoints
+- **Post Management** with version control
+- **User Profiles** with follow/unfollow functionality
+- **Real-time Feed** with pagination and filtering
+- **Health Check** endpoint
+
+## Table of Contents
+
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+- [API Documentation](#api-documentation)
+- [Project Structure](#project-structure)
+- [Development](#development)
+- [API Endpoints](#api-endpoints)
+- [License](#license)
+
+## Getting Started
+
+### Prerequisites
+
+- Go 1.16+
+- PostgreSQL 13+
+- Git
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/nati3514/Social.git
+   cd Social
+   ```
+
+2. Install dependencies:
+   ```bash
+   go mod download
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+### Database Setup
+
+1. Create a new PostgreSQL database
+2. Run migrations:
+   ```bash
+   .\migrate.ps1 up
+   ```
+
+3. (Optional) Seed with test data:
+   ```bash
+   .\migrate.ps1 seed
+   ```
+
+## API Documentation
+
+The API includes interactive Swagger documentation that's automatically generated from code annotations.
+
+### Accessing Documentation
+
+1. Start the server:
+   ```bash
+   go run cmd/api/main.go
+   ```
+
+2. Open in your browser:
+   ```
+   http://localhost:4000/swagger/index.html
+   ```
+
+### Generating Documentation
+
+To update the API documentation:
+
 ```bash
-curl -X PATCH http://localhost:4000/v1/posts/1 \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Updated Title"}'
+.\migrate.ps1 gen-docs
 ```
 
-**Update a Post with Version Control:**
-```bash
-curl -X PATCH http://localhost:4000/v1/posts/1 \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Updated Title", "version": 5}'
+## Project Structure
+
+```
+.
+├── cmd/
+│   └── api/           # Main application
+│       ├── main.go    # Application entry point
+│       └── api.go     # API configuration
+├── docs/              # Generated Swagger documentation
+│   ├── docs.go        # Swagger specification
+│   ├── swagger.json   # OpenAPI JSON
+│   └── swagger.yaml   # OpenAPI YAML
+├── internal/
+│   ├── db/           # Database layer
+│   ├── store/        # Data access layer
+│   └── middleware/   # HTTP middleware
+└── migrate.ps1       # Migration and utility script
 ```
 
-**Health Check:**
+## API Endpoints
+
+### Authentication
+- `POST /v1/login` - Authenticate and get JWT token
+- `POST /v1/register` - Create a new user account
+
+### Posts
+- `GET /v1/posts` - List all posts
+- `POST /v1/posts` - Create a new post
+- `GET /v1/posts/{id}` - Get a specific post
+- `PATCH /v1/posts/{id}` - Update a post
+- `DELETE /v1/posts/{id}` - Delete a post
+
+### Users
+- `GET /v1/users/{id}` - Get user profile
+- `GET /v1/users/{id}/posts` - Get user's posts
+- `POST /v1/users/{id}/follow` - Follow a user
+- `DELETE /v1/users/{id}/follow` - Unfollow a user
+
+### Feed
+- `GET /v1/feed` - Get personalized feed
+  - Query params: `?page=1&limit=10&tags=go,programming`
+
+## Development
+
+### Adding New Endpoints
+
+1. Create a new handler function with Swagger annotations:
+   ```go
+   // @Summary Create a new post
+   // @Description Create a new blog post
+   // @Tags posts
+   // @Accept  json
+   // @Produce json
+   // @Param   post  body      CreatePostRequest  true  "Post data"
+   // @Success 201 {object} Post
+   // @Router /v1/posts [post]
+   func (h *PostHandler) Create(w http.ResponseWriter, r *http.Request) {
+       // Handler implementation
+   }
+   ```
+
+2. Regenerate the documentation:
+   ```bash
+   .\migrate.ps1 gen-docs
+   ```
+
+### Running Tests
+
 ```bash
-curl http://localhost:4000/v1/health
+go test -v ./...
 ```
 
-**User Operations:**
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ```bash
 # Get user by ID
@@ -419,7 +564,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - [x] Project setup
 - [x] Health check endpoint
 - [x] Environment configuration
-- [ ] Database setup (PostgreSQL)
+- [x] Database setup (PostgreSQL)
 - [ ] User authentication
 
 ### Phase 2: User Management
