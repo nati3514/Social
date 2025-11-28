@@ -39,7 +39,7 @@ func main() {
 
 	// Initialize configuration
 	cfg := config{
-		addr: env.GetString("ADDR", ":8080"),
+		addr:   env.GetString("ADDR", ":8080"),
 		apiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
 		db: dbConfig{
 			addr:         "postgres://postgres:12345@localhost:5432/social?sslmode=disable",

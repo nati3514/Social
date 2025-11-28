@@ -87,8 +87,8 @@ function Invoke-GenDocs {
             }
             
             Write-Host "`nAPI documentation generated successfully!" -ForegroundColor Green
-            Write-Host "Documentation will be available at: http://localhost:4000/swagger/index.html" -ForegroundColor Cyan
-            Write-Host "Make sure your API server is running on port 4000" -ForegroundColor Cyan
+            Write-Host "Documentation will be available at: http://localhost:8080/swagger/index.html" -ForegroundColor Cyan
+            Write-Host "Make sure your API server is running on port 8080" -ForegroundColor Cyan
         } else {
             Write-Host "Error: No documentation files were generated" -ForegroundColor Red
             Write-Host "Please check that your main.go file has the proper Swagger annotations" -ForegroundColor Yellow

@@ -5,6 +5,23 @@ import (
 	"net/http"
 )
 
+// GetUserFeed godoc
+// @Summary Get user feed
+// @Description Get personalized feed with posts from followed users
+// @Tags Feed
+// @Accept json
+// @Produce json
+// @Param since query string false "Since timestamp (RFC3339 format)"
+// @Param until query string false "Until timestamp (RFC3339 format)"
+// @Param limit query int false "Limit number of results" default(20)
+// @Param offset query int false "Offset for pagination" default(0)
+// @Param sort query string false "Sort order (asc or desc)" default(desc)
+// @Param tags query string false "Filter by tags (comma-separated)"
+// @Param search query string false "Search in title and content"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users/feed [get]
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
