@@ -140,30 +140,29 @@ Social/
 └── README.md                # This file
 ```
 
-## 🔌 API Endpoints
+## 🔌 API Documentation
+
+Explore the interactive API documentation using Swagger UI:
+
+```
+http://localhost:8080/swagger/index.html
+```
 
 ### API Endpoints
 
 #### Posts
 | Method | Endpoint | Description | Status |
 |--------|----------|-------------|--------|
-| `GET` | `/v1/posts` | List all posts | ✅ Implemented |
+| `GET` | `/v1/posts` | List all posts with pagination | ✅ Implemented |
 | `POST` | `/v1/posts` | Create a new post | ✅ Implemented |
 | `GET` | `/v1/posts/{id}` | Get a specific post with comments | ✅ Implemented |
 | `PATCH` | `/v1/posts/{id}` | Partially update a post | ✅ Implemented |
 | `DELETE` | `/v1/posts/{id}` | Delete a post | ✅ Implemented |
+
+#### Feed
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
 | `GET` | `/v1/users/feed` | Get user's personalized feed | ✅ Implemented |
-| `GET` | `/v1/search?q=term` | Search across posts and users | ✅ Implemented |
-
-#### Comments
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| `GET` | `/v1/posts/{id}/comments` | Get comments for a post | ✅ Implemented |
-
-#### System
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| `GET` | `/v1/health` | Health check | ✅ Implemented |
 
 #### Users
 | Method | Endpoint | Description | Status |
@@ -172,18 +171,74 @@ Social/
 | `PUT` | `/v1/users/{userID}/follow` | Follow a user | ✅ Implemented |
 | `PUT` | `/v1/users/{userID}/unfollow` | Unfollow a user | ✅ Implemented |
 
-### Example Usage
+#### System
+| Method | Endpoint | Description | Status |
+|--------|----------|-------------|--------|
+| `GET` | `/v1/health` | Health check | ✅ Implemented |
 
-**Create a Post:**
+### Example Requests
+
+#### Create a Post
 ```bash
 curl -X POST http://localhost:8080/v1/posts \
   -H "Content-Type: application/json" \
   -d '{"title":"First Post","content":"This is my first post","user_id":1}'
 ```
 
-**Get a Post with Comments:**
+#### Get User Feed with Pagination
 ```bash
-curl http://localhost:8080/v1/posts/1
+curl "http://localhost:8080/v1/users/feed?limit=10&offset=0&sort=desc"
+```
+
+#### Follow a User
+```bash
+curl -X PUT http://localhost:8080/v1/users/2/follow \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 1}'
+```
+
+#### Get User Profile
+```bash
+curl http://localhost:8080/v1/users/1
+```
+
+### Query Parameters
+
+#### Feed Endpoint
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `limit` | integer | No | 20 | Number of items to return (max 100) |
+| `offset` | integer | No | 0 | Number of items to skip |
+| `sort` | string | No | "desc" | Sort order ("asc" or "desc") |
+| `since` | string | No | - | Filter posts created after timestamp (RFC3339) |
+| `until` | string | No | - | Filter posts created before timestamp (RFC3339) |
+| `tags` | string | No | - | Comma-separated list of tags to filter by |
+| `search` | string | No | - | Search term to filter posts by content |
+
+### Response Format
+
+All successful API responses follow this format:
+```json
+{
+  "data": {},
+  "meta": {
+    "total": 0,
+    "page": 1,
+    "limit": 20
+  }
+}
+```
+
+### Error Responses
+
+Error responses include an error message and status code:
+```json
+{
+  "error": {
+    "message": "User not found",
+    "code": 404
+  }
+}
 ```
 
 # Social Media API
