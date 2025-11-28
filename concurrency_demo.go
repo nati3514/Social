@@ -27,7 +27,7 @@ type PostResponse struct {
 
 func main() {
     const (
-        baseURL    = "http://localhost:4000/v1"
+        baseURL    = "http://localhost:8080/v1"
         postID     = "3"
         numWorkers = 5
     )

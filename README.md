@@ -77,7 +77,7 @@ go mod download
 Create a `.env` file in the root directory:
 ```bash
 # Server
-ADDR=:4000
+ADDR=:8080
 
 # Database
 DB_HOST=localhost
@@ -108,7 +108,7 @@ go install github.com/cosmtrek/air@latest
 air
 ```
 
-The API will start on the port specified in your `.env` file (default: `:4000`).
+The API will start on the port specified in your `.env` file (default: `:8080`).
 
 ## 📁 Project Structure
 
@@ -176,14 +176,14 @@ Social/
 
 **Create a Post:**
 ```bash
-curl -X POST http://localhost:4000/v1/posts \
+curl -X POST http://localhost:8080/v1/posts \
   -H "Content-Type: application/json" \
   -d '{"title":"First Post","content":"This is my first post","user_id":1}'
 ```
 
 **Get a Post with Comments:**
 ```bash
-curl http://localhost:4000/v1/posts/1
+curl http://localhost:8080/v1/posts/1
 ```
 
 # Social Media API
@@ -265,7 +265,7 @@ The API includes interactive Swagger documentation that's automatically generate
 
 2. Open in your browser:
    ```
-   http://localhost:4000/swagger/index.html
+   http://localhost:8080/swagger/index.html
    ```
 
 ### Generating Documentation
@@ -354,15 +354,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ```bash
 # Get user by ID
-curl http://localhost:4000/v1/users/1
+curl http://localhost:8080/v1/users/1
 
 # Follow a user
-curl -X PUT http://localhost:4000/v1/users/2/follow \
+curl -X PUT http://localhost:8080/v1/users/2/follow \
   -H "Content-Type: application/json" \
   -d '{"user_id": 1}'
 
 # Unfollow a user
-curl -X PUT http://localhost:4000/v1/users/2/unfollow \
+curl -X PUT http://localhost:8080/v1/users/2/unfollow \
   -H "Content-Type: application/json" \
   -d '{"user_id": 1}'
 

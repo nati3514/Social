@@ -14,19 +14,16 @@ type userKey string
 const userCtx userKey = "user"
 
 // GetUser godoc
-
-// @summary    Fetches a user profile
+// @Summary Get a user profile
 // @Description Fetches a user profile by ID
-// @Tags       Users
-// @Accept     json
-// @Produce    json
-// @Param      id path   int true "User ID"
-// @Success    200 {object} store.User
-// @Failure    404 {object} error
-// @Failure    500 {object} error
-// @Security   ApiKeyAuth
-// @Router     /users/{id} [get]
-
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param userID path int true "User ID"
+// @Success 200 {object} store.User
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users/{userID} [get]
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 
@@ -39,6 +36,19 @@ type FollowUser struct {
 	UserID int64 `json:"user_id"`
 }
 
+// FollowUser godoc
+// @Summary Follow a user
+// @Description Follow a user by providing the follower's user ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param userID path int true "User ID to follow"
+// @Param payload body FollowUser true "Follower user ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string "Already following"
+// @Failure 500 {object} map[string]string
+// @Router /users/{userID}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	followerUser := getUserFromContext(r)
 
@@ -66,6 +76,18 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// UnfollowUser godoc
+// @Summary Unfollow a user
+// @Description Unfollow a user by providing the follower's user ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param userID path int true "User ID to unfollow"
+// @Param payload body FollowUser true "Follower user ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /users/{userID}/unfollow [put]
 func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
 	unfollowedUser := getUserFromContext(r)
 

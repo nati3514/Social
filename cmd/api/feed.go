@@ -5,6 +5,15 @@ import (
 	"net/http"
 )
 
+// GetUserFeed godoc
+// @Summary Get user feed
+// @Description Get personalized feed with posts from followed users
+// @Tags Feed
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]string
+// @Router /users/feed [get]
 func (app *application) getUserFeedHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

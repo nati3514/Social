@@ -32,6 +32,17 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) error {
 	return json.NewEncoder(w).Encode(data)
 }
 
+// CreatePost godoc
+// @Summary Create a new post
+// @Description Create a new post with title, content, and tags
+// @Tags Posts
+// @Accept json
+// @Produce json
+// @Param post body createPostPayload true "Post data"
+// @Success 201 {object} store.Post
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /posts [post]
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var payload createPostPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -64,6 +75,17 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// GetPost godoc
+// @Summary Get a post by ID
+// @Description Get a specific post by ID with all comments
+// @Tags Posts
+// @Accept json
+// @Produce json
+// @Param postID path int true "Post ID"
+// @Success 200 {object} store.Post
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /posts/{postID} [get]
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "postID")
 	id, err := strconv.ParseInt(idParam, 10, 64)
@@ -98,6 +120,17 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeletePost godoc
+// @Summary Delete a post
+// @Description Delete a post by ID
+// @Tags Posts
+// @Accept json
+// @Produce json
+// @Param postID path int true "Post ID"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /posts/{postID} [delete]
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "postID")
 	id, err := strconv.ParseInt(idParam, 10, 64)
@@ -157,6 +190,20 @@ func getPostFromContext(r *http.Request) (*store.Post, error) {
 	return nil, errors.New("post not found in context")
 }
 
+// UpdatePost godoc
+// @Summary Update a post
+// @Description Partially update a post with optimistic concurrency control
+// @Tags Posts
+// @Accept json
+// @Produce json
+// @Param postID path int true "Post ID"
+// @Param post body UpdatePostRequest true "Post update data"
+// @Success 200 {object} store.Post
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 409 {object} map[string]string "Version conflict"
+// @Failure 500 {object} map[string]string
+// @Router /posts/{postID} [patch]
 func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the post ID from the URL
 	idParam := chi.URLParam(r, "postID")
