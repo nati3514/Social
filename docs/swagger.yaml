@@ -389,6 +389,38 @@ paths:
       consumes:
       - application/json
       description: Get personalized feed with posts from followed users
+      parameters:
+      - description: Since timestamp (RFC3339 format)
+        in: query
+        name: since
+        type: string
+      - description: Until timestamp (RFC3339 format)
+        in: query
+        name: until
+        type: string
+      - default: 20
+        description: Limit number of results
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      - default: desc
+        description: Sort order (asc or desc)
+        in: query
+        name: sort
+        type: string
+      - description: Filter by tags (comma-separated)
+        in: query
+        name: tags
+        type: string
+      - description: Search in title and content
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -396,6 +428,12 @@ paths:
           description: OK
           schema:
             additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
             type: object
         "500":
           description: Internal Server Error
