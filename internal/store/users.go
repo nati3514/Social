@@ -88,3 +88,9 @@ func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 	}
 	return user, nil
 }
+
+func (s *UserStore) CreateAndInvite(ctx context.Context, user *User, token string) error {
+	// transaction wrapper
+	// create the user
+	// create the user invite
+}

@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrNotFound  = errors.New("recored not found")
-	ErrConflict = errors.New("record already exists")
+	ErrConflict  = errors.New("record already exists")
 	QueryTimeout = time.Second * 5
 )
 
@@ -25,6 +25,7 @@ type Storage struct {
 	Users interface {
 		GetByID(context.Context, int64) (*User, error)
 		Create(context.Context, *User) error
+		CreateAndInvite(ctx context.Context, user *User, token string) error
 	}
 	Comments interface {
 		Create(context.Context, *Comment) error

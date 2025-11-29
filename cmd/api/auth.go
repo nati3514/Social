@@ -29,9 +29,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// store the user
-	err := app
+	ctx := r.Context()
 
+	// store the user
+	err := app.store.Users.CreateAndInvite(ctx, user, "uuidv4")
+
+	// mail 
+	
 	if err := app.jsonResponse(w, http.StatusCreated, nil); err != nil {
 		app.internalServerError(w, r, err)
 	}
