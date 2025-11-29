@@ -1,16 +1,35 @@
-package store 
+package store
 
 import (
 	"context"
 	"database/sql"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
-	ID       int64  `json:"id"`
+	ID        int64  `json:"id"`
 	Username  string `json:"username"`
-	Email     string  `json:"email"`
-	Password  string   `json:"-"`
-	CreatedAt string   `json:"created_at"`
+	Email     string `json:"email"`
+	Password  string `json:"-"`
+	CreatedAt string `json:"created_at"`
+}
+
+type password struct {
+	text *string
+	hash []byte
+}
+
+func (p *password) Set(text string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	p.text = &text
+	p.hash = hash
+
+	return nil
+
 }
 
 type UserStore struct {
@@ -18,13 +37,13 @@ type UserStore struct {
 }
 
 func (s *UserStore) Create(ctx context.Context, user *User) error {
-	query :=`
+	query := `
       	INSERT INTO users (username, password, email) VALUES($1, $2, $3) RETURNING id,
         created_at`
 
-		ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
-		defer cancel()
-	
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeout)
+	defer cancel()
+
 	err := s.db.QueryRowContext(
 		ctx,
 		query,
@@ -55,16 +74,16 @@ func (s *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 	err := s.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.Username,
-		&user.Email,		
+		&user.Email,
 		&user.Password,
 		&user.CreatedAt,
 	)
 	if err != nil {
 		switch err {
-			case sql.ErrNoRows:
-				return nil, ErrNotFound
-			default:
-				return nil, err
+		case sql.ErrNoRows:
+			return nil, ErrNotFound
+		default:
+			return nil, err
 		}
 	}
 	return user, nil
