@@ -1,11 +1,20 @@
 package main
 
-import "net/http"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"net/http"
+
+	"github.com/google/uuid"
+
+	"github.com/nati3514/Social/internal/store"
+	"golang.org/x/crypto/bcrypt"
+)
 
 type RegisterUserPayload struct {
 	Username string `json:"username" validate:"required,max=100"`
-	Email string `json:"email" validate:"required,email, max=255"`
-	Password string `json:"password" validate:"required,min=3,max=72`
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=3,max=72"`
 }
 
 // RegisterUser godoc
@@ -20,22 +29,49 @@ type RegisterUserPayload struct {
 // @Failure 500 {object} map[string]string
 // @Router /users/authentication/user [post]
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
-	Username : payload.Username,
-	Email: payload.Email,
-	
+	var payload RegisterUserPayload
+	if err := readJSON(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
 	// hash the user password
-	if err := user.Password.Set(payload.Password); err != nil {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+	if err != nil {
 		app.internalServerError(w, r, err)
 		return
 	}
 
+	user := &store.User{
+		Username: payload.Username,
+		Email:    payload.Email,
+		Password: string(hashedPassword),
+	}
+
 	ctx := r.Context()
 
-	// store the user
-	err := app.store.Users.CreateAndInvite(ctx, user, "uuidv4")
+	plainToken := uuid.New().String()
 
-	// mail 
-	
+	// store
+	hash := sha256.Sum256([]byte(plainToken))
+	hashToken := hex.EncodeToString(hash[:])
+
+	// store the user
+	err = app.store.Users.CreateAndInvite(ctx, user, hashToken, app.config.mail.exp)
+	if err != nil {
+		switch err {
+		case store.ErrDuplicateEmail:
+			app.badRequestResponse(w, r, err)
+		case store.ErrDuplicateUsername:
+			app.badRequestResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	// mail
+
 	if err := app.jsonResponse(w, http.StatusCreated, nil); err != nil {
 		app.internalServerError(w, r, err)
 	}

@@ -48,6 +48,9 @@ func main() {
 			maxIdleTime:  time.Duration(env.GetInt("DB_MAX_IDLE_MINUTES", 15)) * time.Minute,
 		},
 		env: env.GetString("ENV", "development"),
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3, // 3 days
+		},
 	}
 
 	// Initialize database connection
