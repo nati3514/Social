@@ -15,28 +15,27 @@ var (
 )
 
 type User struct {
-	ID        int64  `json:"id"`
-	Username  string `json:"username"`
-	Email     string `json:"email"`
-	Password  string `json:"-"`
-	CreatedAt string `json:"created_at"`
+	ID        int64    `json:"id"`
+	Username  string   `json:"username"`
+	Email     string   `json:"email"`
+	Password  password `json:"-"`
+	CreatedAt string   `json:"created_at"`
 }
 
 type password struct {
-	text *string
-	hash []byte
+	Text *string `json:"-"`
+	Hash []byte  `json:"-"`
 }
 
 func (p *password) Set(text string) error {
+	// Bcrypt is called here!
 	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
-	p.text = &text
-	p.hash = hash
-
+	p.Text = &text
+	p.Hash = hash
 	return nil
-
 }
 
 type UserStore struct {
@@ -55,7 +54,7 @@ func (s *UserStore) Create(ctx context.Context, tx *sql.Tx, user *User) error {
 		ctx,
 		query,
 		user.Username,
-		user.Password,
+		user.Password.Hash,
 		user.Email,
 	).Scan(
 		&user.ID,

@@ -118,6 +118,7 @@ var comments = []string{
 func Seed(store store.Storage, db *sql.DB) {
 	ctx := context.Background()
 
+	users := generateUsers(100)
 	// Begin a transaction for the entire seeding operation
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -126,13 +127,14 @@ func Seed(store store.Storage, db *sql.DB) {
 	}
 	defer tx.Rollback() // Rollback if we don't commit
 
-	users := generateUsers(100)
 	for _, user := range users {
 		if err := store.Users.Create(ctx, tx, user); err != nil {
+			_ = tx.Rollback()
 			log.Println("Error creating user:", err)
 			return
 		}
 	}
+	tx.Commit()
 
 	posts := generatePosts(200, users)
 	for _, post := range posts {
@@ -161,11 +163,16 @@ func Seed(store store.Storage, db *sql.DB) {
 func generateUsers(num int) []*store.User {
 	users := make([]*store.User, num)
 	for i := 0; i < num; i++ {
-		users[i] = &store.User{
+		user := &store.User{
 			Username: usernames[i%len(usernames)] + fmt.Sprintf("%d", i),
 			Email:    usernames[i%len(usernames)] + fmt.Sprintf("%d", i) + "@example.com",
-			Password: "123456",
 		}
+		// Set a default password for seeded users
+		if err := user.Password.Set("password123"); err != nil {
+			log.Printf("Error setting password for user %s: %v", user.Username, err)
+			continue
+		}
+		users[i] = user
 	}
 	return users
 }
