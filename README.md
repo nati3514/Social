@@ -11,33 +11,32 @@ A modern, high-performance social media API built with Go, featuring real-time c
 ## 🚀 Features
 
 ### Current Features (v0.5.0)
-- ✅ **Core Infrastructure**
+- **Core Infrastructure**
   - Health Check Endpoint
   - Chi Router with context middleware
   - Environment-based configuration
   - Structured logging with request IDs
   - Database migrations with versioning
-  - **Multi-layer Validation** with `go-playground/validator`
-  - **Database Search Optimization** - pg_trgm extension and GIN indexes
+  - Multi-layer Validation with `go-playground/validator`
+  - Database Search Optimization (pg_trgm extension and GIN indexes)
 
-- ✅ **API Features**
-  - **RESTful JSON API** with consistent response format
-  - **Post Management** - Full CRUD operations
-  - **User Profiles** - View user details and activity
-  - **Comment System** - Nested comments on posts with counts
-  - **User Feed** - Personalized content feed with metadata
-  - **Search** - Optimized search across posts and users
-  - **Context Middleware** - Efficient resource loading
-  - **Error Handling** - Structured error responses with proper HTTP status codes
-  - **Request Validation** - Input validation at multiple layers
-  - **Partial Updates** - PATCH support with proper null handling
-  - **Optimistic Concurrency Control** - Version-based updates to prevent lost updates
+- **API Features**
+  - RESTful JSON API with consistent response format
+  - Post Management (CRUD operations)
+  - User Profiles with follow/unfollow functionality
+  - Comment System with nested comments
+  - Personalized User Feed with metadata
+  - Optimized search across posts and users
+  - Context-aware request handling
+  - Structured error responses with HTTP status codes
+  - Input validation at multiple layers
+  - Partial updates with PATCH
+  - Optimistic Concurrency Control
 
-- ✅ **Repository Pattern** - Clean data access layer
-- ✅ **Database Optimization**
-  - GIN indexes for text search
-  - Query optimization for feed generation
-  - Efficient data loading with proper joins
+- **Architecture**
+  - Clean Repository Pattern implementation
+  - Database optimization with GIN indexes
+  - Efficient query patterns and joins
 
 ### Planned Features
 - [ ] User authentication & authorization (JWT)
@@ -47,68 +46,49 @@ A modern, high-performance social media API built with Go, featuring real-time c
 - [ ] Rate limiting
 - [ ] Redis caching
 - [ ] Advanced search filters
-- [ ] Search result highlighting
 - [ ] File upload (images/videos)
-- [ ] Real-time notifications
 - [ ] Docker support
 
 ## 📋 Prerequisites
 
 - **Go** 1.21 or higher
-- **Git** for version control
 - **PostgreSQL** 13+
+- **Git** for version control
 - **Air** (optional, for live reload during development)
 - **Golang Migrate** (for database migrations)
 
-## 🛠️ Installation
+## 🛠️ Installation & Setup
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/nati3514/Social.git
-cd Social
-```
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/nati3514/Social.git
+   cd Social
+   ```
 
-### 2. Install dependencies
-```bash
-go mod download
-```
+2. **Install dependencies**
+   ```bash
+   go mod download
+   ```
 
-### 3. Set up environment variables
-Create a `.env` file in the root directory:
-```bash
-# Server
-ADDR=:8080
+3. **Configure environment**
+   - Copy `.env.example` to `.env`
+   - Update database credentials and settings
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
 
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=your_password
-DB_NAME=social
-DB_SSLMODE=disable
+4. **Run the application**
+   ```bash
+   # Using Go directly
+   go run ./cmd/api
+   
+   # Or with Air for live reload
+   go install github.com/cosmtrek/air@latest
+   air
+   ```
 
-# Connection Pool
-DB_MAX_OPEN_CONNS=25
-DB_MAX_IDLE_CONNS=25
-DB_MAX_IDLE_TIME=15m
-
-### 4. Run the application
-
-**Option A: Using Go directly**
-```bash
-go run ./cmd/api
-```
-
-**Option B: Using Air (with live reload)**
-```bash
-# Install Air
-go install github.com/cosmtrek/air@latest
-
-# Run with Air
-air
-```
-
-The API will start on the port specified in your `.env` file (default: `:8080`).
+   The API will be available at `http://localhost:8080`
 
 ## 📁 Project Structure
 
@@ -120,61 +100,56 @@ Social/
 │   │   ├── api.go           # Server setup and routing
 │   │   └── health.go        # Health check handler
 │   └── migrate/             # Database migration and seeding
-│       └── seed/            # Database seeding
-│           └── main.go      # Seed data generation
-├── migrations/              # Database migration files
-│   ├── *.up.sql            # SQL for applying migrations
-│   └── *.down.sql          # SQL for rolling back migrations
 ├── internal/
 │   ├── db/                  # Database connection and setup
 │   ├── env/                 # Environment variable helpers
 │   └── store/               # Repository pattern implementation
 │       ├── postgres/        # PostgreSQL implementations
 │       └── store.go         # Store interfaces
-├── bin/                     # Compiled binaries (gitignored)
-├── .env                     # Environment variables (gitignored)
-├── .air.toml                # Air configuration
-├── migrate.ps1              # Windows migration helper
-├── go.mod                   # Go module definition
-├── go.sum                   # Dependency checksums
+├── migrations/              # Database migration files
+├── .env.example             # Example environment variables
 └── README.md                # This file
 ```
 
 ## 🔌 API Documentation
 
-Explore the interactive API documentation using Swagger UI:
+Interactive API documentation is available using Swagger UI:
 
 ```
 http://localhost:8080/swagger/index.html
 ```
 
-### API Endpoints
+### Available Endpoints
+
+#### Authentication
+- `POST /v1/login` - Authenticate and get JWT token
+- `POST /v1/register` - Create a new user account
 
 #### Posts
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| `GET` | `/v1/posts` | List all posts with pagination | ✅ Implemented |
-| `POST` | `/v1/posts` | Create a new post | ✅ Implemented |
-| `GET` | `/v1/posts/{id}` | Get a specific post with comments | ✅ Implemented |
-| `PATCH` | `/v1/posts/{id}` | Partially update a post | ✅ Implemented |
-| `DELETE` | `/v1/posts/{id}` | Delete a post | ✅ Implemented |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/posts` | List all posts with pagination |
+| `POST` | `/v1/posts` | Create a new post |
+| `GET` | `/v1/posts/{id}` | Get a specific post with comments |
+| `PATCH` | `/v1/posts/{id}` | Partially update a post |
+| `DELETE` | `/v1/posts/{id}` | Delete a post |
 
 #### Feed
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| `GET` | `/v1/users/feed` | Get user's personalized feed | ✅ Implemented |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/users/feed` | Get user's personalized feed |
 
 #### Users
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| `GET` | `/v1/users/{userID}` | Get user profile | ✅ Implemented |
-| `PUT` | `/v1/users/{userID}/follow` | Follow a user | ✅ Implemented |
-| `PUT` | `/v1/users/{userID}/unfollow` | Unfollow a user | ✅ Implemented |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/users/{userID}` | Get user profile |
+| `PUT` | `/v1/users/{userID}/follow` | Follow a user |
+| `PUT` | `/v1/users/{userID}/unfollow` | Unfollow a user |
 
 #### System
-| Method | Endpoint | Description | Status |
-|--------|----------|-------------|--------|
-| `GET` | `/v1/health` | Health check | ✅ Implemented |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/v1/health` | Health check |
 
 ### Example Requests
 
@@ -185,39 +160,14 @@ curl -X POST http://localhost:8080/v1/posts \
   -d '{"title":"First Post","content":"This is my first post","user_id":1}'
 ```
 
-#### Get User Feed with Pagination
+#### Get User Feed
 ```bash
 curl "http://localhost:8080/v1/users/feed?limit=10&offset=0&sort=desc"
 ```
 
-#### Follow a User
-```bash
-curl -X PUT http://localhost:8080/v1/users/2/follow \
-  -H "Content-Type: application/json" \
-  -d '{"user_id": 1}'
-```
+### API Conventions
 
-#### Get User Profile
-```bash
-curl http://localhost:8080/v1/users/1
-```
-
-### Query Parameters
-
-#### Feed Endpoint
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `limit` | integer | No | 20 | Number of items to return (max 100) |
-| `offset` | integer | No | 0 | Number of items to skip |
-| `sort` | string | No | "desc" | Sort order ("asc" or "desc") |
-| `since` | string | No | - | Filter posts created after timestamp (RFC3339) |
-| `until` | string | No | - | Filter posts created before timestamp (RFC3339) |
-| `tags` | string | No | - | Comma-separated list of tags to filter by |
-| `search` | string | No | - | Search term to filter posts by content |
-
-### Response Format
-
-All successful API responses follow this format:
+#### Response Format
 ```json
 {
   "data": {},
@@ -229,77 +179,65 @@ All successful API responses follow this format:
 }
 ```
 
-### Error Responses
-
-Error responses include an error message and status code:
+#### Error Format
 ```json
 {
   "error": {
-    "message": "User not found",
+    "message": "Resource not found",
     "code": 404
   }
 }
 ```
 
-# Social Media API
+#### Query Parameters (Feed Endpoint)
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | 20 | Items per page (max 100) |
+| `offset` | integer | 0 | Items to skip |
+| `sort` | string | "desc" | Sort order ("asc" or "desc") |
+| `since` | string | - | Filter posts after timestamp |
+| `until` | string | - | Filter posts before timestamp |
+| `tags` | string | - | Comma-separated tags |
+| `search` | string | - | Search in post content |
 
-A high-performance social media API built with Go, Chi router, and PostgreSQL, featuring Swagger documentation.
+## 🚀 Development
 
-## Features
+### Database Migrations
+Use the migration script to manage database schema:
+```bash
+# Windows
+.\migrate.ps1 up
 
-- **RESTful API** with proper HTTP methods and status codes
-- **Swagger/OpenAPI** interactive documentation
-- **JWT Authentication** for secure endpoints
-- **Post Management** with version control
-- **User Profiles** with follow/unfollow functionality
-- **Real-time Feed** with pagination and filtering
-- **Health Check** endpoint
+# Linux/macOS
+migrate -path ./migrations -database "postgres://user:pass@localhost:5432/dbname?sslmode=disable" up
+```
 
-## Table of Contents
+### Generating Documentation
+API documentation is automatically generated using `swag`:
+```bash
+# Install swag
+go install github.com/swaggo/swag/cmd/swag@latest
 
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Project Structure](#project-structure)
-- [Development](#development)
-- [API Endpoints](#api-endpoints)
-- [License](#license)
+# Generate docs
+swag init -g cmd/api/main.go
+```
 
-## Getting Started
+## 📝 License
 
-### Prerequisites
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- Go 1.16+
-- PostgreSQL 13+
-- Git
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/nati3514/Social.git
-   cd Social
-   ```
-
-2. Install dependencies:
-   ```bash
-   go mod download
-   ```
-
-3. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+### 🚀 Development
 
 ### Database Setup
 
 1. Create a new PostgreSQL database
 2. Run migrations:
    ```bash
+   # Windows
    .\migrate.ps1 up
+
+   # Linux/macOS
+   migrate -path ./migrations -database "postgres://user:pass@localhost:5432/dbname?sslmode=disable" up
    ```
 
 3. (Optional) Seed with test data:
@@ -307,73 +245,17 @@ A high-performance social media API built with Go, Chi router, and PostgreSQL, f
    .\migrate.ps1 seed
    ```
 
-## API Documentation
-
-The API includes interactive Swagger documentation that's automatically generated from code annotations.
-
-### Accessing Documentation
-
-1. Start the server:
-   ```bash
-   go run cmd/api/main.go
-   ```
-
-2. Open in your browser:
-   ```
-   http://localhost:8080/swagger/index.html
-   ```
-
 ### Generating Documentation
 
-To update the API documentation:
+API documentation is automatically generated using `swag`:
 
 ```bash
-.\migrate.ps1 gen-docs
+# Install swag if not already installed
+go install github.com/swaggo/swag/cmd/swag@latest
+
+# Generate docs
+swag init -g cmd/api/main.go -o docs
 ```
-
-## Project Structure
-
-```
-.
-├── cmd/
-│   └── api/           # Main application
-│       ├── main.go    # Application entry point
-│       └── api.go     # API configuration
-├── docs/              # Generated Swagger documentation
-│   ├── docs.go        # Swagger specification
-│   ├── swagger.json   # OpenAPI JSON
-│   └── swagger.yaml   # OpenAPI YAML
-├── internal/
-│   ├── db/           # Database layer
-│   ├── store/        # Data access layer
-│   └── middleware/   # HTTP middleware
-└── migrate.ps1       # Migration and utility script
-```
-
-## API Endpoints
-
-### Authentication
-- `POST /v1/login` - Authenticate and get JWT token
-- `POST /v1/register` - Create a new user account
-
-### Posts
-- `GET /v1/posts` - List all posts
-- `POST /v1/posts` - Create a new post
-- `GET /v1/posts/{id}` - Get a specific post
-- `PATCH /v1/posts/{id}` - Update a post
-- `DELETE /v1/posts/{id}` - Delete a post
-
-### Users
-- `GET /v1/users/{id}` - Get user profile
-- `GET /v1/users/{id}/posts` - Get user's posts
-- `POST /v1/users/{id}/follow` - Follow a user
-- `DELETE /v1/users/{id}/follow` - Unfollow a user
-
-### Feed
-- `GET /v1/feed` - Get personalized feed
-  - Query params: `?page=1&limit=10&tags=go,programming`
-
-## Development
 
 ### Adding New Endpoints
 
