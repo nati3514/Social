@@ -15,6 +15,10 @@ type RegisterUserPayload struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=3,max=72"`
 }
+type UserWithToken struct {
+	*store.User
+	Token string `json:"token"`
+}
 
 // RegisterUser godoc
 // @Summary Register a new user
@@ -23,7 +27,7 @@ type RegisterUserPayload struct {
 // @Accept json
 // @Produce json
 // @Param payload body RegisterUserPayload true "User registration details"
-// @Success 201 {object} map[string]string
+// @Success 201 {object} UserWithToken   "User registered successfully"
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /authentication/user [post]
@@ -67,9 +71,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// mail
+	UserWithToken := UserWithToken{
+		User:  user,
+		Token: plainToken,
+	}
+	// send mail
 
-	if err := app.jsonResponse(w, http.StatusCreated, nil); err != nil {
+	if err := app.jsonResponse(w, http.StatusCreated, UserWithToken); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }

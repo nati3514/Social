@@ -37,6 +37,21 @@ definitions:
       version:
         type: integer
     type: object
+  main.UserWithToken:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      token:
+        type: string
+      username:
+        type: string
+    type: object
   main.createPostPayload:
     properties:
       content:
@@ -103,6 +118,8 @@ definitions:
         type: string
       id:
         type: integer
+      is_active:
+        type: boolean
       username:
         type: string
     type: object
@@ -136,11 +153,9 @@ paths:
       - application/json
       responses:
         "201":
-          description: Created
+          description: User registered successfully
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/main.UserWithToken'
         "400":
           description: Bad Request
           schema:
@@ -435,6 +450,35 @@ paths:
               type: string
             type: object
       summary: Unfollow a user
+      tags:
+      - Users
+  /users/activate/{token}:
+    put:
+      description: Activate a user by invitation token
+      parameters:
+      - description: Invitation Token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Activate a user
       tags:
       - Users
   /users/feed:
