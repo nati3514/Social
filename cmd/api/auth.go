@@ -8,13 +8,16 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/nati3514/Social/internal/store"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterUserPayload struct {
 	Username string `json:"username" validate:"required,max=100"`
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=3,max=72"`
+}
+type UserWithToken struct {
+	*store.User
+	Token string `json:"token"`
 }
 
 // RegisterUser godoc
@@ -23,11 +26,11 @@ type RegisterUserPayload struct {
 // @Tags Authentication
 // @Accept json
 // @Produce json
-// @Param payload body map[string]string true "Username and password"
-// @Success 201 {object} map[string]string
+// @Param payload body RegisterUserPayload true "User registration details"
+// @Success 201 {object} UserWithToken   "User registered successfully"
 // @Failure 400 {object} map[string]string
 // @Failure 500 {object} map[string]string
-// @Router /users/authentication/user [post]
+// @Router /authentication/user [post]
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload RegisterUserPayload
 	if err := readJSON(w, r, &payload); err != nil {
@@ -35,17 +38,15 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// hash the user password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
-	if err != nil {
-		app.internalServerError(w, r, err)
-		return
-	}
-
 	user := &store.User{
 		Username: payload.Username,
 		Email:    payload.Email,
-		Password: string(hashedPassword),
+	}
+
+	// Set the password using the password struct's Set method
+	if err := user.Password.Set(payload.Password); err != nil {
+		app.internalServerError(w, r, err)
+		return
 	}
 
 	ctx := r.Context()
@@ -57,7 +58,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	hashToken := hex.EncodeToString(hash[:])
 
 	// store the user
-	err = app.store.Users.CreateAndInvite(ctx, user, hashToken, app.config.mail.exp)
+	err := app.store.Users.CreateAndInvite(ctx, user, hashToken, app.config.mail.exp)
 	if err != nil {
 		switch err {
 		case store.ErrDuplicateEmail:
@@ -70,9 +71,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// mail
+	UserWithToken := UserWithToken{
+		User:  user,
+		Token: plainToken,
+	}
+	// send mail
 
-	if err := app.jsonResponse(w, http.StatusCreated, nil); err != nil {
+	if err := app.jsonResponse(w, http.StatusCreated, UserWithToken); err != nil {
 		app.internalServerError(w, r, err)
 	}
 }
